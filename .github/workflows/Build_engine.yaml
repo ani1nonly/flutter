@@ -47,8 +47,8 @@ jobs:
           yes | sdkmanager --install "cmake;3.22.1"
 
       # New step to install vpython3
-      - name: Install vpython3
-        run: sudo apt-get install -y vpython3
+      #- name: Install vpython3
+      #  run: sudo apt-get install -y vpython3
 
       - name: Configure Flutter Engine Build (release)
         run: |
