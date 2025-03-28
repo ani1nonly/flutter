@@ -1,4 +1,4 @@
-name: Compile Flutter Engine - Android ARM64 Host (Release Only)
+name: Compile Flutter Engine - Android ARM64 Host (Release Only - Specific Version)
 
 on:
   push:
@@ -25,6 +25,13 @@ jobs:
           fetch-depth: 1
           lfs: true
 
+      - name: Checkout latest stable Flutter version
+        run: |
+          cd flutter
+          git fetch --tags
+          git checkout -f v3.19.1 # Replace with the actual latest stable tag
+          echo "Checked out Flutter version: $(git --no-pager log -n 1 --pretty=format:'%H %s')"
+
       - name: Verify Git HEAD
         run: |
           cd flutter
@@ -34,6 +41,23 @@ jobs:
         run: |
           cd flutter
           ./bin/flutter doctor -v
+
+      - name: Set up Java Development Kit (JDK)
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: '11'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          sdk-version: '33'
+          ndk-version: '25.1.8937393'
+
+      - name: Install NDK and CMake
+        run: |
+          echo "sdkmanager --install 'ndk;${ANDROID_NDK_VERSION}'" | sdkmanager --sdk_root="${ANDROID_SDK_ROOT}" --stdin
+          echo "sdkmanager --install 'cmake;3.22.1'" | sdkmanager --sdk_root="${ANDROID_SDK_ROOT}" --stdin
 
       - name: Configure Flutter Engine Build (release)
         run: |
