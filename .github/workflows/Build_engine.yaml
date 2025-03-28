@@ -68,20 +68,20 @@ jobs:
         run: |
           echo "Expected artifact path for ${{ matrix.build_mode }}: ${{ github.workspace }}/flutter/engine/out/linux_arm64/${{ matrix.build_mode }}${{ matrix.build_mode != 'release' && '_unopt' || '' }}/flutter_patched_sdk"
 
-      - name: Create Archive (${{ matrix.build_mode }})
-        run: |
-          cd ${{ github.workspace }}/flutter/engine/out/linux_arm64
-          if [[ "${{ matrix.build_mode }}" == "debug" ]]; then
-            zip -r android-arm64-host-engine-debug.zip debug_unopt
-          elif [[ "${{ matrix.build_mode }}" == "profile" ]]; then
-            zip -r android-arm64-host-engine-profile.zip profile_unopt
-          else
-            zip -r android-arm64-host-engine-release.zip release
-          fi
+      # - name: Create Archive (${{ matrix.build_mode }})
+      #   run: |
+      #     cd ${{ github.workspace }}/flutter/engine/out/linux_arm64
+      #     if [[ "${{ matrix.build_mode }}" == "debug" ]]; then
+      #       zip -r android-arm64-host-engine-debug.zip debug_unopt
+      #     elif [[ "${{ matrix.build_mode }}" == "profile" ]]; then
+      #       zip -r android-arm64-host-engine-profile.zip profile_unopt
+      #     else
+      #       zip -r android-arm64-host-engine-release.zip release
+      #     fi
 
-      - name: Upload Archive Artifact (${{ matrix.build_mode }})
-        uses: actions/upload-artifact@v3
-        with:
-          name: android-arm64-host-engine-${{ matrix.build_mode }}
-          path: ${{ github.workspace }}/flutter/engine/out/linux_arm64/android-arm64-host-engine-${{ matrix.build_mode }}.zip
-          if-no-files-found: error
+      # - name: Upload Archive Artifact (${{ matrix.build_mode }})
+      #   uses: actions/upload-artifact@v3
+      #   with:
+      #     name: android-arm64-host-engine-${{ matrix.build_mode }}
+      #     path: ${{ github.workspace }}/flutter/engine/out/linux_arm64/android-arm64-host-engine-${{ matrix.build_mode }}.zip
+      #     if-no-files-found: error
