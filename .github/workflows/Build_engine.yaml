@@ -1,4 +1,4 @@
-name: Compile Flutter Engine - Android ARM64 Host (All Modes)
+name: Compile Flutter Engine - Android ARM64 Host (Release Only)
 
 on:
   push:
@@ -9,11 +9,12 @@ on:
 
 jobs:
   build-android-arm64-host:
-    name: Build Android ARM64 Host Engine
+    name: Build Android ARM64 Host Engine (Release)
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        build_mode: [ debug, profile, release ]
+        build_mode: [ release ] # Only build the release variant
+        # build_mode: [ debug, profile, release ] # Previous configuration
 
     steps:
       - name: Checkout code
@@ -34,54 +35,42 @@ jobs:
           cd flutter
           ./bin/flutter doctor -v
 
-      - name: Configure Flutter Engine Build (${{ matrix.build_mode }})
+      - name: Configure Flutter Engine Build (release)
         run: |
           cd flutter/engine
           echo "Current directory after cd flutter/engine: $(pwd)"
-          ./flutter/tools/gn --host-os=linux --host-cpu=arm64 --target-os=android --target-cpu=arm64 --runtime-mode=${{ matrix.build_mode }} ${{ matrix.build_mode == 'release' && '--optimized' || '--unoptimized' }}
+          ./flutter/tools/gn --host-os=linux --host-cpu=arm64 --target-os=android --target-cpu=arm64 --runtime-mode=release --optimized
           echo "GN configuration complete."
 
-      - name: Create Output Directories (${{ matrix.build_mode }})
+      - name: Create Output Directories (release)
         run: |
           cd flutter/engine/out/linux_arm64
           echo "Current directory: $(pwd)"
-          mkdir -p ${{ matrix.build_mode }}_unopt
-          if [[ "${{ matrix.build_mode }}" == "release" ]]; then
-            mkdir -p ${{ matrix.build_mode }}
-          fi
+          mkdir -p release
           echo "Output directories created."
           ls -l
 
-      - name: Build Flutter Engine (${{ matrix.build_mode }})
+      - name: Build Flutter Engine (release)
         run: |
           cd flutter/engine
           echo "Current directory before ninja: $(pwd)"
-          ninja -C out/linux_arm64/${{ matrix.build_mode }}_unopt flutter_patched_sdk # Unoptimized build for debug and profile
-          if [[ "${{ matrix.build_mode }}" == "release" ]]; then
-            ninja -C out/linux_arm64/${{ matrix.build_mode }} flutter_patched_sdk # Optimized build for release
-          fi
+          ninja -C out/linux_arm64/release flutter_patched_sdk
           echo "Ninja build complete."
-          echo "Contents of out/linux_arm64/${{ matrix.build_mode }}${{ matrix.build_mode != 'release' && '_unopt' || '' }}:"
-          ls -l out/linux_arm64/${{ matrix.build_mode }}${{ matrix.build_mode != 'release' && '_unopt' || '' }}
+          echo "Contents of out/linux_arm64/release:"
+          ls -l out/linux_arm64/release
 
-      - name: Print Artifact Path (${{ matrix.build_mode }})
+      - name: Print Artifact Path (release)
         run: |
-          echo "Expected artifact path for ${{ matrix.build_mode }}: ${{ github.workspace }}/flutter/engine/out/linux_arm64/${{ matrix.build_mode }}${{ matrix.build_mode != 'release' && '_unopt' || '' }}/flutter_patched_sdk"
+          echo "Expected artifact path for release: ${{ github.workspace }}/flutter/engine/out/linux_arm64/release/flutter_patched_sdk"
 
-      # - name: Create Archive (${{ matrix.build_mode }})
+      # - name: Create Archive (release)
       #   run: |
       #     cd ${{ github.workspace }}/flutter/engine/out/linux_arm64
-      #     if [[ "${{ matrix.build_mode }}" == "debug" ]]; then
-      #       zip -r android-arm64-host-engine-debug.zip debug_unopt
-      #     elif [[ "${{ matrix.build_mode }}" == "profile" ]]; then
-      #       zip -r android-arm64-host-engine-profile.zip profile_unopt
-      #     else
-      #       zip -r android-arm64-host-engine-release.zip release
-      #     fi
+      #     zip -r android-arm64-host-engine-release.zip release
 
-      # - name: Upload Archive Artifact (${{ matrix.build_mode }})
+      # - name: Upload Archive Artifact (release)
       #   uses: actions/upload-artifact@v3
       #   with:
-      #     name: android-arm64-host-engine-${{ matrix.build_mode }}
-      #     path: ${{ github.workspace }}/flutter/engine/out/linux_arm64/android-arm64-host-engine-${{ matrix.build_mode }}.zip
+      #     name: android-arm64-host-engine-release
+      #     path: ${{ github.workspace }}/flutter/engine/out/linux_arm64/android-arm64-host-engine-release.zip
       #     if-no-files-found: error
