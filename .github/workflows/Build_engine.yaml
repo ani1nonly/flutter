@@ -46,6 +46,10 @@ jobs:
           yes | sdkmanager --install "ndk;25.1.8937393"
           yes | sdkmanager --install "cmake;3.22.1"
 
+      # New step to install vpython3
+      - name: Install vpython3
+        run: sudo apt-get install -y vpython3
+
       - name: Configure Flutter Engine Build (release)
         run: |
           cd flutter/engine
@@ -73,15 +77,3 @@ jobs:
       - name: Print Artifact Path (release)
         run: |
           echo "Expected artifact path for release: ${{ github.workspace }}/flutter/engine/out/linux_arm64/release/flutter_patched_sdk"
-
-      # - name: Create Archive (release)
-      #   run: |
-      #     cd ${{ github.workspace }}/flutter/engine/out/linux_arm64
-      #     zip -r android-arm64-host-engine-release.zip release
-
-      # - name: Upload Archive Artifact (release)
-      #   uses: actions/upload-artifact@v3
-      #   with:
-      #     name: android-arm64-host-engine-release
-      #     path: ${{ github.workspace }}/flutter/engine/out/linux_arm64/android-arm64-host-engine-release.zip
-      #     if-no-files-found: error
