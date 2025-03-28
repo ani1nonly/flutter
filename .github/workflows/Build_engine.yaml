@@ -25,26 +25,6 @@ jobs:
           fetch-depth: 1
           lfs: true
 
-      - name: Get latest stable Flutter version
-        id: get_version
-        run: |
-          cd flutter
-          latest_tag=$(git tag --sort=-creatordate | grep '^v' | head -n 1)
-          echo "Latest stable tag: $latest_tag"
-          echo "latest_stable_tag=$latest_tag" >> "$GITHUB_OUTPUT"
-
-      - name: Checkout latest stable Flutter version
-        run: |
-          cd flutter
-          git fetch --tags
-          git checkout -f ${{ steps.get_version.outputs.latest_stable_tag }}
-          echo "Checked out Flutter version: $(git --no-pager log -n 1 --pretty=format:'%H %s')"
-
-      - name: Verify Git HEAD
-        run: |
-          cd flutter
-          git rev-parse HEAD
-
       - name: Get Flutter Dependencies
         run: |
           cd flutter
@@ -64,8 +44,8 @@ jobs:
 
       - name: Install NDK and CMake
         run: |
-          echo "sdkmanager --install 'ndk;${ANDROID_NDK_VERSION}'" | sdkmanager --sdk_root="${ANDROID_SDK_ROOT}" --stdin
-          echo "sdkmanager --install 'cmake;3.22.1'" | sdkmanager --sdk_root="${ANDROID_SDK_ROOT}" --stdin
+          yes | sdkmanager --install "ndk;${{ steps.android-sdk.outputs.ndk-version }}"
+          yes | sdkmanager --install "cmake;3.22.1"
 
       - name: Configure Flutter Engine Build (release)
         run: |
