@@ -14,7 +14,6 @@ jobs:
     strategy:
       matrix:
         build_mode: [ release ] # Only build the release variant
-        # build_mode: [ debug, profile, release ] # Previous configuration
 
     steps:
       - name: Checkout code
@@ -44,7 +43,7 @@ jobs:
 
       - name: Install NDK and CMake
         run: |
-          yes | sdkmanager --install "ndk;${{ steps.android-sdk.outputs.ndk-version }}"
+          yes | sdkmanager --install "ndk;25.1.8937393"
           yes | sdkmanager --install "cmake;3.22.1"
 
       - name: Configure Flutter Engine Build (release)
