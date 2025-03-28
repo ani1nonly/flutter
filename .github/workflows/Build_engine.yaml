@@ -1,4 +1,4 @@
-name: Compile Flutter Engine - Android ARM64 Host (Release Only - Specific Version)
+name: Compile Flutter Engine - Android ARM64 Host (Release Only - Latest Stable)
 
 on:
   push:
@@ -25,11 +25,19 @@ jobs:
           fetch-depth: 1
           lfs: true
 
+      - name: Get latest stable Flutter version
+        id: get_version
+        run: |
+          cd flutter
+          latest_tag=$(git tag --sort=-creatordate | grep '^v' | head -n 1)
+          echo "Latest stable tag: $latest_tag"
+          echo "latest_stable_tag=$latest_tag" >> "$GITHUB_OUTPUT"
+
       - name: Checkout latest stable Flutter version
         run: |
           cd flutter
           git fetch --tags
-          git checkout -f v3.19.1 # Replace with the actual latest stable tag
+          git checkout -f ${{ steps.get_version.outputs.latest_stable_tag }}
           echo "Checked out Flutter version: $(git --no-pager log -n 1 --pretty=format:'%H %s')"
 
       - name: Verify Git HEAD
