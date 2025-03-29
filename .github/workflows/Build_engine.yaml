@@ -57,6 +57,22 @@ jobs:
       - name: Install Depot Tools
         uses: newkdev/setup-depot-tools@v1.0.1
 
+      - name: Verify required files exist
+        run: |
+          if [ ! -f ./src/flutter/tools/gn ]; then
+            echo "Error: Required file 'gn' does not exist."
+            exit 1
+          fi
+          if [ ! -d ./src/skia ]; then
+            echo "Error: Required directory 'skia' does not exist."
+            exit 1
+          fi
+
+      - name: Create required directories
+        run: |
+          mkdir -p flutter/engine/out/linux_arm64
+          echo "Required directories created."
+
       - name: Configure Flutter Engine Build (release)
         run: |
           cd flutter/engine
@@ -80,6 +96,17 @@ jobs:
           echo "Ninja build complete."
           echo "Contents of out/linux_arm64/release:"
           ls -l out/linux_arm64/release
+
+      - name: Verify output files
+        run: |
+          cd flutter/engine/out/linux_arm64/release
+          if [ -z "$(ls -A .)" ]; then
+            echo "Error: No files found in the output directory."
+            exit 1
+          else
+            echo "Files found in the output directory:"
+            ls -l
+          fi
 
       - name: Print Artifact Path (release)
         run: |
