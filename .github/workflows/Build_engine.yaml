@@ -61,7 +61,7 @@ jobs:
         run: |
           cd flutter/engine
           echo "Current directory after cd flutter/engine: $(pwd)"
-          ./src/flutter/tools/gn --host=linux --target-os=android --cpu=arm64 --runtime-mode=release --optimized
+          ./src/flutter/tools/gn --android --android-cpu=arm64 --target-os=android --runtime-mode=release
           echo "GN configuration complete."
 
       - name: Create Output Directories (release)
