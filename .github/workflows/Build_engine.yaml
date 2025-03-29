@@ -49,6 +49,11 @@ jobs:
       - name: Install python3
         run: sudo apt-get install -y python3
 
+      - name: Install dependencies
+        run: | 
+          yes | sudo apt-get update
+          yes | sudo apt-get install -y build-essential
+
       - name: Install Depot Tools
         uses: newkdev/setup-depot-tools@v1.0.1
 
@@ -56,7 +61,7 @@ jobs:
         run: |
           cd flutter/engine
           echo "Current directory after cd flutter/engine: $(pwd)"
-          ./src/flutter/tools/gn --host=linux --target=android --cpu=arm64 --runtime-mode=release --optimized
+          ./src/flutter/tools/gn --host=linux --target-os=android --cpu=arm64 --runtime-mode=release --optimized
           echo "GN configuration complete."
 
       - name: Create Output Directories (release)
