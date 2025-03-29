@@ -59,8 +59,10 @@ jobs:
 
       - name: Configure Flutter Engine Build (release)
         run: |
+          ls
           cd flutter/engine
           echo "Current directory after cd flutter/engine: $(pwd)"
+          ls
           ./src/flutter/tools/gn --android --android-cpu=arm64
           echo "GN configuration complete."
 
