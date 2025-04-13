@@ -1,88 +1,100 @@
-name: Compile Flutter Engine - Android ARM64 Host (Release Only - Latest Stable)
+name: Build Flutter Engine for ARM64 (Host and Target)
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main  # Trigger the build when you push to the main branch
   pull_request:
-    branches: [ main ]
-  workflow_dispatch:
+    branches:
+      - main  # Trigger the build for pull requests targeting the main branch
 
 jobs:
-  build-android-arm64-host:
-    name: Build Android ARM64 Host Engine (Release)
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        build_mode: [ release ] # Only build the release variant
+  build:
+    runs-on: ubuntu-latest  # GitHub Actions runner that supports Ubuntu Linux
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-        with:
-          repository: flutter/flutter
-          path: flutter
-          fetch-depth: 1
-          lfs: true
+    - name: Checkout Repository
+      uses: actions/checkout@v2  # Checkout the repository
 
-      - name: Get Flutter Dependencies
-        run: |
-          cd flutter
-          ./bin/flutter doctor -v
+    - name: Set up Java JDK
+      uses: actions/setup-java@v2
+      with:
+        java-version: '8'  # Setup Java 8 for Android build
+        java-package: jdk  # Setup the required Java package
 
-      - name: Set up Java Development Kit (JDK)
-        uses: actions/setup-java@v3
-        with:
-          distribution: 'zulu'
-          java-version: '17'
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          clang \
+          python3 \
+          build-essential \
+          libglib2.0-dev \
+          libfreetype6-dev \
+          libssl-dev \
+          pkg-config \
+          libprotobuf-dev \
+          protobuf-compiler \
+          libcurl4-openssl-dev \
+          libpng-dev \
+          cmake \
+          ninja-build \
+          python3-pip \
+          wget
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-        with:
-          sdk-version: '33'
-          ndk-version: '25.1.8937393'
+    - name: Install Dart SDK
+      run: |
+        # Install Dart SDK for compatibility
+        sudo apt-get install apt-transport-https
+        sudo sh -c 'wget -qO- https://storage.googleapis.com/download.dartlang.org/linux/debian/dart_stable_amd64.deb'
+        sudo apt-get update -y
+        sudo apt-get install dart
 
-      - name: Install NDK and CMake
-        run: |
-          yes | sdkmanager --install "ndk;25.1.8937393"
-          yes | sdkmanager --install "cmake;3.22.1"
+    - name: Set up Android NDK
+      run: |
+        export ANDROID_HOME=$HOME/Android/Sdk
+        export PATH=$ANDROID_HOME/tools:$ANDROID_HOME/tools/bin:$ANDROID_HOME/platform-tools:$PATH
+        wget https://dl.google.com/android/repository/android-ndk-r21e-linux-x86_64.zip
+        unzip android-ndk-r21e-linux-x86_64.zip -d $HOME/Android/Sdk
+        export ANDROID_NDK_HOME=$HOME/Android/Sdk/android-ndk-r21e
+        export PATH=$ANDROID_NDK_HOME:$PATH
 
-      - name: Install python3
-        run: sudo apt-get install -y python3
+    - name: Set up Android SDK (for building APK)
+      run: |
+        wget https://dl.google.com/android/repository/commandlinetools-linux-7583922_latest.zip
+        unzip commandlinetools-linux-7583922_latest.zip -d $HOME/Android/Sdk/cmdline-tools
+        export ANDROID_SDK_ROOT=$HOME/Android/Sdk
+        export PATH=$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$PATH
+        yes | sdkmanager --licenses
+        sdkmanager "build-tools;30.0.3" "platform-tools"
 
-      - name: Install dependencies
-        run: | 
-          yes | sudo apt-get update
-          yes | sudo apt-get install -y build-essential
+    - name: Clone Flutter Engine
+      run: |
+        git clone https://github.com/flutter/engine.git
+        cd engine
+        git checkout master  # or use the Flutter version you are targeting
 
-      - name: Install Depot Tools
-        uses: newkdev/setup-depot-tools@v1.0.1
+    - name: Configure for ARM64 Host and Target
+      run: |
+        cd engine
+        # Set environment variables for ARM64 host and target
+        export GN_ARGS="target_os=android target_cpu=arm64 android_ndk=$ANDROID_NDK_HOME"
+        ./flutter/tools/gn $GN_ARGS
+        # Confirm that the target is ARM64
+        cat out/host_debug/gn_args.gn
 
-      - name: Configure Flutter Engine Build (release)
-        run: |
-          ls
-          cd flutter/engine
-          echo "Current directory after cd flutter/engine: $(pwd)"
-          ls
-          ./src/flutter/tools/gn --android --android-cpu=arm64
-          echo "GN configuration complete."
+    - name: Build the Engine for ARM64 Target
+      run: |
+        cd engine
+        # Build the engine with ninja for ARM64 target
+        ninja -C out/android_arm64
 
-      - name: Create Output Directories (release)
-        run: |
-          cd flutter/engine/out/linux_arm64
-          echo "Current directory: $(pwd)"
-          mkdir -p release
-          echo "Output directories created."
-          ls -l
+    - name: Upload Build Artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: flutter-engine-arm64
+        path: engine/out/android_arm64  # Path to the compiled engine binaries
 
-      - name: Build Flutter Engine (release)
-        run: |
-          cd flutter/engine
-          echo "Current directory before ninja: $(pwd)"
-          ninja -C out/linux_arm64/release flutter_patched_sdk
-          echo "Ninja build complete."
-          echo "Contents of out/linux_arm64/release:"
-          ls -l out/linux_arm64/release
-
-      - name: Print Artifact Path (release)
-        run: |
-          echo "Expected artifact path for release: ${{ github.workspace }}/flutter/engine/out/linux_arm64/release/flutter_patched_sdk"
+    - name: Clean up
+      run: |
+        rm -rf engine  # Clean up the engine repository
